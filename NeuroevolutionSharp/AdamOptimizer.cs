@@ -17,7 +17,7 @@ public class AdamOptimizer<T>(double learningRate = 0.001, double beta1 = 0.9, d
 
     private T _v = T.GetZero();
 
-    private ulong _t = 1;
+    private ulong _t = 0;
 
     public AdamOptimizer<T> GradientAscent()
     {
