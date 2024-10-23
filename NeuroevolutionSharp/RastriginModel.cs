@@ -2,20 +2,7 @@ namespace NeuroevolutionSharp;
 
 public class RastriginModel : IModel<RastriginModel>
 {
-    private readonly double[] _parameters = new double[20];
-
-    public static RastriginModel GetZero()
-    {
-        return GetNormal(0, 0);
-    }
-
-    public static RastriginModel GetNormal(double mean, double std)
-    {
-        var model = new RastriginModel();
-        for (var i = 0; i < model._parameters.Length; i++)
-            model._parameters[i] = NormalDistribution.GetSample(mean, std);
-        return model;
-    }
+    private readonly double[] _parameters = new double[10];
 
     public static RastriginModel Operate(RastriginModel[] models, Func<double[], double> operateFunc)
     {
@@ -41,17 +28,17 @@ public class RastriginModel : IModel<RastriginModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 500;
-        var muLearningRate = 0.01;
-        var sigmaLearningRate = 0.01;
+        var populationSize = 1000;
+        var muLearningRate = 0.2;
+        var sigmaLearningRate = 0.1;
         var g = 0;
         var muOptimizer = new AdamOptimizer<RastriginModel>(muLearningRate).GradientAscent();
         var sigmaOptimizer = new AdamOptimizer<RastriginModel>(sigmaLearningRate).GradientAscent();
-        var mu = GetNormal(5.12, 0);
-        var sigma = Operate([], x => 1);
+        var mu = Operate([], x => 5.12);
+        var sigma = Operate([], x => 2);
         double score = double.MinValue;
 
-        while (g < 100000 && score < -0.0001)
+        while (g < 100000 && score < -0.01)
         {
             score = GetScore(mu);
             Console.WriteLine($"Generation {g}: {score}");
@@ -76,13 +63,16 @@ public class RastriginModel : IModel<RastriginModel>
             rewardPlus = rewards.Take(populationSize).ToArray();
             rewardNeg = rewards.Skip(populationSize).ToArray();
 
-            var muGradient = GetZero();
-            var sigmaGradient = GetZero();
+            var muGradient = Operate([], x => 0);
+            var sigmaGradient = Operate([], x => 0);
             for (var i = 0; i < populationSize; i++)
             {
-                muGradient = Operate([muGradient, epsilon[i]], x => x[0] + (rewardPlus[i] - rewardNeg[i]) * x[1]);
+                var t = epsilon[i];
                 var s = Operate([sigma, epsilon[i]], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
-                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + ((rewardPlus[i] + rewardNeg[i]) / 2 - rewardsAvg) * x[1]);
+                var rT = rewardPlus[i] - rewardNeg[i];
+                var sT = (rewardPlus[i] + rewardNeg[i]) / 2 - rewardsAvg;
+                muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
+                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + sT * x[1]);
             }
             muGradient = Operate([muGradient], x => x[0] / populationSize);
             sigmaGradient = Operate([sigmaGradient], x => x[0] / populationSize);
@@ -90,42 +80,7 @@ public class RastriginModel : IModel<RastriginModel>
             mu = muOptimizer.Update(mu, muGradient);
             sigma = sigmaOptimizer.Update(sigma, sigmaGradient);
         }
-    }
-
-    public static void RunEvolutionStrategies()
-    {
-        var populationSize = 500;
-        var learningRate = 0.01;
-        var std = 0.5;
-        var g = 0;
-        var optimizer = new AdamOptimizer<RastriginModel>(learningRate).GradientAscent();
-        var model = GetNormal(5.12, 0);
-        var score = GetScore(model);
-
-        while (g < 100000 && score < -0.1)
-        {
-            score = GetScore(model);
-            Console.WriteLine($"Generation {g}: {score} : {model.GetState()}");
-            g += 1;
-
-            var noiseScores = new (RastriginModel, double)[populationSize];
-            for (var i = 0; i < populationSize; i++)
-            {
-                var noise = GetNormal(0, std);
-                var newModel = Operate([model, noise], x => x[0] + x[1]);
-                var newScore = GetScore(newModel);
-                noiseScores[i] = (noise, newScore);
-            }
-            var noises = noiseScores.OrderBy(x => x.Item2).Select(x => x.Item1).ToArray();
-
-            var gradient = GetZero();
-            for (var i = 0; i < populationSize; i++)
-            {
-                var rankScore = 0.1 * (i - (populationSize / 2));
-                gradient = Operate([gradient, noises[i]], x => x[0] + x[1] * rankScore);
-            }
-            gradient = Operate([gradient], x => x[0] / (std * populationSize));
-            model = optimizer.Update(model, gradient);
-        }
+        Console.WriteLine();
+        Console.WriteLine(mu.GetState());
     }
 }

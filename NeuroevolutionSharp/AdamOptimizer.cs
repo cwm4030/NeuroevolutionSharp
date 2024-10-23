@@ -13,9 +13,9 @@ public class AdamOptimizer<T>(double learningRate = 0.001, double beta1 = 0.9, d
 
     private Func<double[], double> _updateFunc = x => x[0] - x[1];
 
-    private T _m = T.GetZero();
+    private T _m = T.Operate([], x => 0);
 
-    private T _v = T.GetZero();
+    private T _v = T.Operate([], x => 0);
 
     private ulong _t = 0;
 
