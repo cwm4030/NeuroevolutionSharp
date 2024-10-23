@@ -68,7 +68,7 @@ public class RastriginModel : IModel<RastriginModel>
             for (var i = 0; i < populationSize; i++)
             {
                 var t = epsilon[i];
-                var s = Operate([sigma, epsilon[i]], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
+                var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
                 var rT = rewardPlus[i] - rewardNeg[i];
                 var sT = (rewardPlus[i] + rewardNeg[i]) / 2 - rewardsAvg;
                 muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
