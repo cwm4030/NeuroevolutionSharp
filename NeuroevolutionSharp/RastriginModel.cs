@@ -2,7 +2,7 @@ namespace NeuroevolutionSharp;
 
 public class RastriginModel : IModel<RastriginModel>
 {
-    private readonly double[] _parameters = [0, 0, 0, 0, 0];
+    private readonly double[] _parameters = new double[20];
 
     public static RastriginModel GetZero()
     {
@@ -51,10 +51,10 @@ public class RastriginModel : IModel<RastriginModel>
         var sigma = Operate([], x => 1);
         double score = double.MinValue;
 
-        while (g < 100000 && score < -0.00000001)
+        while (g < 100000 && score < -0.0001)
         {
             score = GetScore(mu);
-            Console.WriteLine($"Generation {g}: {score} : {mu.GetState()}");
+            Console.WriteLine($"Generation {g}: {score}");
             g += 1;
 
             var rewardPlus = new double[populationSize];
