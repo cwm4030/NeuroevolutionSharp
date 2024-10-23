@@ -70,9 +70,9 @@ public class RastriginModel : IModel<RastriginModel>
                 var t = epsilon[i];
                 var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
                 var rT = rewardPlus[i] - rewardNeg[i];
-                var sT = (rewardPlus[i] + rewardNeg[i]) / 2 - muReward;
+                var rS = (rewardPlus[i] + rewardNeg[i]) / 2 - muReward;
                 muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
-                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + sT * x[1]);
+                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + rS * x[1]);
             }
             muGradient = Operate([muGradient], x => x[0] / populationSize);
             sigmaGradient = Operate([sigmaGradient], x => x[0] / populationSize);
