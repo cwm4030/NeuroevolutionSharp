@@ -12,7 +12,7 @@ public class RastriginModel : IModel<RastriginModel>
         return model;
     }
 
-    public static double GetScore(RastriginModel model)
+    public static double GetReward(RastriginModel model)
     {
         var a = 10.0;
         var score = a * model._parameters.Length;
@@ -36,12 +36,12 @@ public class RastriginModel : IModel<RastriginModel>
         var sigmaOptimizer = new AdamOptimizer<RastriginModel>(sigmaLearningRate).GradientAscent();
         var mu = Operate([], x => 5.12);
         var sigma = Operate([], x => 2);
-        double score = double.MinValue;
+        double muReward = double.MinValue;
 
-        while (g < 100000 && score < -0.01)
+        while (g < 100000 && muReward < -0.01)
         {
-            score = GetScore(mu);
-            Console.WriteLine($"Generation {g}: {score}");
+            muReward = GetReward(mu);
+            Console.WriteLine($"Generation {g}: {muReward}");
             g += 1;
 
             var rewardPlus = new double[populationSize];
@@ -53,8 +53,8 @@ public class RastriginModel : IModel<RastriginModel>
                 var muPlus = Operate([mu, noise], x => x[0] + x[1]);
                 var muNeg = Operate([mu, noise], x => x[0] - x[1]);
                 epsilon[i] = noise;
-                rewardPlus[i] = GetScore(muPlus);
-                rewardNeg[i] = GetScore(muNeg);
+                rewardPlus[i] = GetReward(muPlus);
+                rewardNeg[i] = GetReward(muNeg);
             }
             var rewards = rewardPlus.Concat(rewardNeg).ToArray();
             var rewardsAvg = rewards.Sum() / rewards.Length;
@@ -70,7 +70,7 @@ public class RastriginModel : IModel<RastriginModel>
                 var t = epsilon[i];
                 var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
                 var rT = rewardPlus[i] - rewardNeg[i];
-                var sT = (rewardPlus[i] + rewardNeg[i]) / 2 - rewardsAvg;
+                var sT = (rewardPlus[i] + rewardNeg[i]) / 2 - muReward;
                 muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
                 sigmaGradient = Operate([sigmaGradient, s], x => x[0] + sT * x[1]);
             }
