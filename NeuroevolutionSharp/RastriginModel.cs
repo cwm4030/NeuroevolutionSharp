@@ -39,6 +39,59 @@ public class RastriginModel : IModel<RastriginModel>
         return string.Join(", ", _parameters);
     }
 
+    public static void RunParameterExploringPolicyGradients()
+    {
+        var populationSize = 500;
+        var muLearningRate = 0.01;
+        var sigmaLearningRate = 0.01;
+        var g = 0;
+        var muOptimizer = new AdamOptimizer<RastriginModel>(muLearningRate).GradientAscent();
+        var sigmaOptimizer = new AdamOptimizer<RastriginModel>(sigmaLearningRate).GradientAscent();
+        var mu = GetNormal(5.12, 0);
+        var sigma = Operate([], x => 1);
+        double score = double.MinValue;
+
+        while (g < 100000 && score < -0.00000001)
+        {
+            score = GetScore(mu);
+            Console.WriteLine($"Generation {g}: {score} : {mu.GetState()}");
+            g += 1;
+
+            var rewardPlus = new double[populationSize];
+            var rewardNeg = new double[populationSize];
+            var epsilon = new RastriginModel[populationSize];
+            for (var i = 0; i < populationSize; i++)
+            {
+                var noise = Operate([sigma], x => NormalDistribution.GetSample(0, x[0]));
+                var muPlus = Operate([mu, noise], x => x[0] + x[1]);
+                var muNeg = Operate([mu, noise], x => x[0] - x[1]);
+                epsilon[i] = noise;
+                rewardPlus[i] = GetScore(muPlus);
+                rewardNeg[i] = GetScore(muNeg);
+            }
+            var rewards = rewardPlus.Concat(rewardNeg).ToArray();
+            var rewardsAvg = rewards.Sum() / rewards.Length;
+            var rewardsStd = Math.Sqrt(rewards.Sum(x => (x - rewardsAvg) * (x - rewardsAvg)) / rewards.Length);
+            rewards = rewards.Select(x => (x - rewardsAvg) / rewardsStd).ToArray();
+            rewardPlus = rewards.Take(populationSize).ToArray();
+            rewardNeg = rewards.Skip(populationSize).ToArray();
+
+            var muGradient = GetZero();
+            var sigmaGradient = GetZero();
+            for (var i = 0; i < populationSize; i++)
+            {
+                muGradient = Operate([muGradient, epsilon[i]], x => x[0] + (rewardPlus[i] - rewardNeg[i]) * x[1]);
+                var s = Operate([sigma, epsilon[i]], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
+                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + ((rewardPlus[i] + rewardNeg[i]) / 2 - rewardsAvg) * x[1]);
+            }
+            muGradient = Operate([muGradient], x => x[0] / populationSize);
+            sigmaGradient = Operate([sigmaGradient], x => x[0] / populationSize);
+
+            mu = muOptimizer.Update(mu, muGradient);
+            sigma = sigmaOptimizer.Update(sigma, sigmaGradient);
+        }
+    }
+
     public static void RunEvolutionStrategies()
     {
         var populationSize = 500;
