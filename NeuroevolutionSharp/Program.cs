@@ -1,9 +1,11 @@
-﻿namespace NeuroevolutionSharp;
+﻿using NeuroevolutionSharp.Models;
+
+namespace NeuroevolutionSharp;
 
 public static class Program
 {
     public static void Main()
     {
-        RastriginModel.RunParameterExploringPolicyGradients();
+        XorModel.RunParameterExploringPolicyGradients();
     }
 }

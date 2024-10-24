@@ -1,4 +1,4 @@
-namespace NeuroevolutionSharp;
+namespace NeuroevolutionSharp.Models;
 
 public interface IModel<T>
 {

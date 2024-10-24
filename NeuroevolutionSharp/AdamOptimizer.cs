@@ -1,3 +1,5 @@
+using NeuroevolutionSharp.Models;
+
 namespace NeuroevolutionSharp;
 
 public class AdamOptimizer<T>(double learningRate = 0.001, double beta1 = 0.9, double beta2 = 0.999, double epsilon = 1e-8)

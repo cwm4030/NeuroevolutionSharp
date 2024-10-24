@@ -1,4 +1,4 @@
-namespace NeuroevolutionSharp;
+namespace NeuroevolutionSharp.Models;
 
 public class RastriginModel : IModel<RastriginModel>
 {
