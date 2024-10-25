@@ -9,9 +9,9 @@ public class XorModel : IModel<XorModel>
     public XorModel()
     {
         Layers = [
-            new(2, 10),
-            new(10, 10),
-            new(10, 4),
+            new(2, 4),
+            new(4, 4),
+            new(4, 4),
             new(4, 1)
         ];
     }
@@ -54,7 +54,7 @@ public class XorModel : IModel<XorModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 100;
+        var populationSize = 200;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
@@ -83,15 +83,13 @@ public class XorModel : IModel<XorModel>
                 rewardNeg[i] = GetReward(muNeg);
             }
             var rewards = rewardPlus.Concat(rewardNeg).ToArray();
-            var rewardsAvg = rewards.Sum() / rewards.Length;
-            var rewardsStd = Math.Sqrt(rewards.Sum(x => (x - rewardsAvg) * (x - rewardsAvg)) / rewards.Length);
-            rewards = rewards.Select(x => (x - rewardsAvg) / rewardsStd).ToArray();
-            rewardPlus = rewards.Take(populationSize).ToArray();
-            rewardNeg = rewards.Skip(populationSize).ToArray();
+            var rewardsRank = rewards.Select((x, i) => (x, i)).OrderBy(x => x.x).Select((x, i) => (0.01 * (i - populationSize), x.i)).OrderBy(x => x.i).Select(x => x.Item1);
+            rewardPlus = rewardsRank.Take(populationSize).ToArray();
+            rewardNeg = rewardsRank.Skip(populationSize).ToArray();
 
             var muGradient = Operate([], x => 0);
             var sigmaGradient = Operate([], x => 0);
-            for (var i = 0; i < populationSize; i++)
+            Parallel.For(0, populationSize, i =>
             {
                 var t = epsilon[i];
                 var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
@@ -99,7 +97,7 @@ public class XorModel : IModel<XorModel>
                 var rS = (rewardPlus[i] + rewardNeg[i]) / 2 - muReward;
                 muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
                 sigmaGradient = Operate([sigmaGradient, s], x => x[0] + rS * x[1]);
-            }
+            });
             muGradient = Operate([muGradient], x => x[0] / populationSize);
             sigmaGradient = Operate([sigmaGradient], x => x[0] / populationSize);
 
