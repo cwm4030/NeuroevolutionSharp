@@ -9,8 +9,8 @@ public class XorModel : IModel<XorModel>
     public XorModel()
     {
         Layers = [
-            new(2, 4),
-            new(4, 4),
+            new(2, 10),
+            new(10, 4),
             new(4, 4),
             new(4, 1)
         ];
@@ -54,7 +54,8 @@ public class XorModel : IModel<XorModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 200;
+        var maxReward = 0;
+        var populationSize = 1000;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
@@ -62,41 +63,32 @@ public class XorModel : IModel<XorModel>
         var sigmaOptimizer = new AdamOptimizer<XorModel>(sigmaLearningRate).GradientAscent();
         var mu = Operate([], x => NormalDistribution.GetSample(0, 1));
         var sigma = Operate([], x => 1);
-        double muReward = double.MinValue;
+        var muReward = double.MinValue;
 
-        while (g < 100000 && muReward < -0.001)
+        while (g < 100000 && muReward < -0.01)
         {
             muReward = GetReward(mu);
             Console.WriteLine($"Generation {g}: {muReward}");
             g += 1;
 
-            var rewardPlus = new double[populationSize];
-            var rewardNeg = new double[populationSize];
-            var epsilon = new XorModel[populationSize];
-            for (var i = 0; i < populationSize; i++)
-            {
-                var noise = Operate([sigma], x => NormalDistribution.GetSample(0, x[0]));
-                var muPlus = Operate([mu, noise], x => x[0] + x[1]);
-                var muNeg = Operate([mu, noise], x => x[0] - x[1]);
-                epsilon[i] = noise;
-                rewardPlus[i] = GetReward(muPlus);
-                rewardNeg[i] = GetReward(muNeg);
-            }
-            var rewards = rewardPlus.Concat(rewardNeg).ToArray();
-            var rewardsRank = rewards.Select((x, i) => (x, i)).OrderBy(x => x.x).Select((x, i) => (0.01 * (i - populationSize), x.i)).OrderBy(x => x.i).Select(x => x.Item1);
-            rewardPlus = rewardsRank.Take(populationSize).ToArray();
-            rewardNeg = rewardsRank.Skip(populationSize).ToArray();
-
             var muGradient = Operate([], x => 0);
             var sigmaGradient = Operate([], x => 0);
             Parallel.For(0, populationSize, i =>
             {
-                var t = epsilon[i];
+                var epsilon = Operate([sigma], x => NormalDistribution.GetSample(0, x[0]));
+                var muPlus = Operate([mu, epsilon], x => x[0] + x[1]);
+                var muNeg = Operate([mu, epsilon], x => x[0] - x[1]);
+                var rewardPlus = GetReward(muPlus);
+                var rewardNeg = GetReward(muNeg);
+
+                var t = epsilon;
                 var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
-                var rT = rewardPlus[i] - rewardNeg[i];
-                var rS = (rewardPlus[i] + rewardNeg[i]) / 2 - muReward;
-                muGradient = Operate([muGradient, t], x => x[0] + rT * x[1]);
-                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + rS * x[1]);
+                var rT = rewardPlus - rewardNeg;
+                var rTNorm = 1 / (2 * maxReward - rewardPlus - rewardNeg);
+                var rS = (rewardPlus + rewardNeg) / 2 - muReward;
+                var rSNorm = 1 / (maxReward - muReward);
+                muGradient = Operate([muGradient, t], x => x[0] + x[1] * rT * rTNorm);
+                sigmaGradient = Operate([sigmaGradient, s], x => x[0] + x[1] * rS * rSNorm);
             });
             muGradient = Operate([muGradient], x => x[0] / populationSize);
             sigmaGradient = Operate([sigmaGradient], x => x[0] / populationSize);
