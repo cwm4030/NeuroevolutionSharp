@@ -26,7 +26,7 @@ public class FullyConnectedNode
 
     public static FullyConnectedNode Operate(FullyConnectedNode[] nodes, Func<double[], double> operateFunc)
     {
-        var numInputs = nodes.Length > 0 ? nodes.Max(x => x.NumInputs) : 0;
+        var numInputs = nodes.FirstOrDefault()?.NumInputs ?? 0;
         var node = new FullyConnectedNode()
         {
             NumInputs = numInputs,
@@ -38,12 +38,12 @@ public class FullyConnectedNode
         return node;
     }
 
-    public double FeedForward(double[] inputs, Func<double, double> activationFunc)
+    public double FeedForward(double[] inputs)
     {
         Debug.Assert(inputs.Length == NumInputs);
         var output = Bias;
         for (var i = 0; i < NumInputs; i++)
             output += Weights[i] * inputs[i];
-        return activationFunc(output);
+        return output;
     }
 }

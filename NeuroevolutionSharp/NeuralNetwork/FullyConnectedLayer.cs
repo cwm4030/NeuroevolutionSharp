@@ -29,8 +29,8 @@ public class FullyConnectedLayer
 
     public static FullyConnectedLayer Operate(FullyConnectedLayer[] layers, Func<double[], double> operateFunc)
     {
-        var numInputs = layers.Length > 0 ? layers.Max(x => x.NumInputs) : 0;
-        var numOutputs = layers.Length > 0 ? layers.Max(x => x.NumOutputs) : 0;
+        var numInputs = layers.FirstOrDefault()?.NumInputs ?? 0;
+        var numOutputs = layers.FirstOrDefault()?.NumOutputs ?? 0;
         var layer = new FullyConnectedLayer
         {
             NumInputs = numInputs,
@@ -42,12 +42,12 @@ public class FullyConnectedLayer
         return layer;
     }
 
-    public double[] FeedForward(double[] inputs, Func<double, double> activationFunc)
+    public double[] FeedForward(double[] inputs, Func<double[], double[]> activationFunc)
     {
         Debug.Assert(NumInputs == inputs.Length);
         var outputs = new double[NumOutputs];
         for (var i = 0; i < NumOutputs; i++)
-            outputs[i] = OutputNodes[i].FeedForward(inputs, activationFunc);
-        return outputs;
+            outputs[i] = OutputNodes[i].FeedForward(inputs);
+        return activationFunc(outputs);
     }
 }
