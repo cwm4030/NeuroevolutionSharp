@@ -34,10 +34,14 @@ public class XorModel : IModel<XorModel>
 
     public double[] FeedForward(double[] inputs)
     {
-        var outputs0 = Layers[0].FeedForward(inputs, ActivationFunctions.LeakyRelu);
-        var outputs1 = Layers[1].FeedForward(outputs0, ActivationFunctions.LeakyRelu);
-        var outputs2 = Layers[2].FeedForward(outputs1, ActivationFunctions.LeakyRelu);
-        return Layers[3].FeedForward(outputs2, ActivationFunctions.Linear);
+        for (var i = 0; i < Layers.Length; i++)
+        {
+            if (i != Layers.Length - 1)
+                inputs = Layers[i].FeedForward(inputs, ActivationFunctions.LeakyRelu);
+            else
+                inputs = Layers[i].FeedForward(inputs, ActivationFunctions.Linear);
+        }
+        return inputs;
     }
 
     public static double GetReward(XorModel model)
@@ -82,7 +86,7 @@ public class XorModel : IModel<XorModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 100;
+        var populationSize = 500;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
