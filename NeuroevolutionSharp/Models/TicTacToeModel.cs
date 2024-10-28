@@ -101,7 +101,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 500;
+        var populationSize = 1000;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
@@ -132,7 +132,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
             var epsilon = new TicTacToeModel[populationSize];
             var rewardPlus = new double[populationSize];
             var rewardNeg = new double[populationSize];
-            Parallel.For(0, populationSize, i =>
+            Parallel.For(0, populationSize, new ParallelOptions { MaxDegreeOfParallelism = 10 }, i =>
             {
                 epsilon[i] = Operate([sigma], x => NormalDistribution.GetSample(0, x[0]));
                 var muPlus = Operate([mu, epsilon[i]], x => x[0] + x[1]);
@@ -148,7 +148,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
 
             var muGradient = Operate([], x => 0);
             var sigmaGradient = Operate([], x => 0);
-            Parallel.For(0, populationSize, i =>
+            Parallel.For(0, populationSize, new ParallelOptions { MaxDegreeOfParallelism = 10 }, i =>
             {
                 var t = epsilon[i];
                 var s = Operate([sigma, t], x => ((x[1] * x[1]) - (x[0] * x[0])) / x[0]);
