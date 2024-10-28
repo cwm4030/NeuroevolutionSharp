@@ -13,12 +13,12 @@ public class TicTacToeModel : IModel<TicTacToeModel>
     public TicTacToeModel()
     {
         Layers = [
-            new(10, 20),
+            new(10, 40),
+            new(40, 40),
+            new(40, 20),
             new(20, 20),
-            new(20, 10),
-            new(10, 10),
-            new(10, 10),
-            new(10, 9)
+            new(20, 20),
+            new(20, 9)
         ];
     }
 
@@ -50,7 +50,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
     public static double GetReward(TicTacToeModel baseModel, TicTacToeModel model)
     {
         var score = 0.0;
-        for (var i = 0; i < 250; i++)
+        for (var i = 0; i < 5000; i++)
         {
             var ticTacToe = new TicTacToe();
             var result = ticTacToe.PlayOut(baseModel, model, false, true);
@@ -58,7 +58,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
                 score += 1.0;
         }
 
-        for (var i = 0; i < 250; i++)
+        for (var i = 0; i < 5000; i++)
         {
             var ticTacToe = new TicTacToe();
             var result = ticTacToe.PlayOut(model, baseModel, true, false);
@@ -101,7 +101,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 1000;
+        var populationSize = 200;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
@@ -124,7 +124,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
             Console.WriteLine($"Generation {g}: {muReward}");
             g += 1;
 
-            if (muReward >= 750)
+            if (muReward >= 7500)
             {
                 basePlayer = Operate([mu], x => x[0]);
             }
