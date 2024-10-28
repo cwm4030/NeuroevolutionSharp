@@ -42,12 +42,12 @@ public class FullyConnectedLayer
         return layer;
     }
 
-    public double[] FeedForward(double[] inputs, Func<double[], double[]> activationFunc)
+    public double[] FeedForward(double[] inputs, Func<double[], object[], double[]> activationFunc)
     {
         Debug.Assert(NumInputs == inputs.Length);
         var outputs = new double[NumOutputs];
         for (var i = 0; i < NumOutputs; i++)
             outputs[i] = OutputNodes[i].FeedForward(inputs);
-        return activationFunc(outputs);
+        return activationFunc(outputs, []);
     }
 }

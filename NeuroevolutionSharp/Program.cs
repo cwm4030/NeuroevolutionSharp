@@ -6,6 +6,6 @@ public static class Program
 {
     public static void Main()
     {
-        XorModel.RunParameterExploringPolicyGradients();
+        TicTacToeModel.RunParameterExploringPolicyGradients();
     }
 }
