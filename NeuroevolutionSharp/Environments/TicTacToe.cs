@@ -18,14 +18,14 @@ public class TicTacToe
 
     public int[] Board = new int[9];
 
-    public int PlayOut(TicTacToeModel modelX, TicTacToeModel modelO)
+    public int PlayOut(TicTacToeModel modelX, TicTacToeModel modelO, bool modelXTraining, bool modelOTraining)
     {
         int result;
         while (true)
         {
             result = GetBoardState();
             if (result != E) break;
-            MakeMove(modelX, modelO);
+            MakeMove(modelX, modelO, modelXTraining, modelOTraining);
         }
         return result;
     }
@@ -38,9 +38,9 @@ public class TicTacToe
             PrintBoard();
             result = GetBoardState();
             if (result != E) break;
-            MakeMove(modelX, modelO);
+            MakeMove(modelX, modelO, false, false);
         }
-        var winner = string.Empty;
+        string winner;
         if (result == X)
             winner = "X";
         else if (result == O)
@@ -51,26 +51,35 @@ public class TicTacToe
         Console.WriteLine();
     }
 
-    public void MakeMove(TicTacToeModel modelX, TicTacToeModel modelO)
+    public void MakeMove(TicTacToeModel modelX, TicTacToeModel modelO, bool modelXTraining, bool modelOTraining)
     {
         var model = Turn == X ? modelX : modelO;
+        var training = Turn == X ? modelXTraining : modelOTraining;
         var validMoves = GetValidMoves();
         double[] inputs = [Turn, Board[0], Board[1], Board[2], Board[3], Board[4], Board[5], Board[6], Board[7], Board[8]];
         var outputs = model.FeedForward(inputs, validMoves);
 
-        var moveRand = _rand.NextDouble();
-        double moveSum = 0.0;
-        int move = 0;
-        for (var i = 0; i < outputs.Length; i++)
+        if (training)
         {
-            moveSum += outputs[i];
-            if (moveSum >= moveRand)
+            var moveRand = _rand.NextDouble();
+            double moveSum = 0.0;
+            int move = 0;
+            for (var i = 0; i < outputs.Length; i++)
             {
-                move = i;
-                break;
+                moveSum += outputs[i];
+                if (moveSum >= moveRand)
+                {
+                    move = i;
+                    break;
+                }
             }
+            Board[move] = Turn;
         }
-        Board[move] = Turn;
+        else
+        {
+            var move = outputs.Select((x, i) => (x, i)).OrderByDescending(x => x.x).First().i;
+            Board[move] = Turn;
+        }
         Turn = Turn == X ? O : X;
     }
 

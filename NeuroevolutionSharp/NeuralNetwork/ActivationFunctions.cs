@@ -14,10 +14,10 @@ public static class ActivationFunctions
 
     public static double[] SoftMaxFiltered(double[] inputs, params object[] args)
     {
-        var inputsAvg = inputs.Sum() / inputs.Length;
-        var inputsStd = Math.Sqrt(inputs.Sum(x => (x - inputsAvg) * (x - inputsAvg)) / inputs.Length);
-        inputs = inputs.Select(x => (x - inputsAvg) / inputsStd).ToArray();
-        
+        var minInput = inputs.Min();
+        var maxInput = inputs.Max();
+        inputs = inputs.Select(x => (x - minInput) / (maxInput - minInput)).ToArray();
+
         var validIndexes = (args[0] as IEnumerable<int>)?.ToHashSet() ?? [];
         var numerators = new double[inputs.Length];
         var denominator = 0.0;

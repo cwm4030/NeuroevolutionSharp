@@ -50,18 +50,18 @@ public class TicTacToeModel : IModel<TicTacToeModel>
     public static double GetReward(TicTacToeModel baseModel, TicTacToeModel model)
     {
         var score = 0.0;
-        for (var i = 0; i < 500; i++)
+        for (var i = 0; i < 250; i++)
         {
             var ticTacToe = new TicTacToe();
-            var result = ticTacToe.PlayOut(baseModel, model);
+            var result = ticTacToe.PlayOut(baseModel, model, false, true);
             if (result == TicTacToe.O || result == TicTacToe.D)
                 score += 1.0;
         }
 
-        for (var i = 0; i < 500; i++)
+        for (var i = 0; i < 250; i++)
         {
             var ticTacToe = new TicTacToe();
-            var result = ticTacToe.PlayOut(model, baseModel);
+            var result = ticTacToe.PlayOut(model, baseModel, true, false);
             if (result == TicTacToe.X || result == TicTacToe.D)
                 score += 1.0;
         }
@@ -110,18 +110,24 @@ public class TicTacToeModel : IModel<TicTacToeModel>
         var mu = Open("BestModel.json.zip") ?? Operate([], x => NormalDistribution.GetSample(0, 1));
         var sigma = Operate([], x => 1);
         var muReward = double.MinValue;
+        var basePlayer = Operate([mu], x => x[0]);
 
         while (g < 10000)
         {
             if (g % 1000 == 0)
             {
                 var ticTacToe = new TicTacToe();
-                ticTacToe.DisplayPlayOut(mu, mu);
+                ticTacToe.DisplayPlayOut(basePlayer, mu);
             }
 
-            muReward = GetReward(mu, mu);
+            muReward = GetReward(basePlayer, mu);
             Console.WriteLine($"Generation {g}: {muReward}");
             g += 1;
+
+            if (muReward >= 750)
+            {
+                basePlayer = Operate([mu], x => x[0]);
+            }
 
             var epsilon = new TicTacToeModel[populationSize];
             var rewardPlus = new double[populationSize];
