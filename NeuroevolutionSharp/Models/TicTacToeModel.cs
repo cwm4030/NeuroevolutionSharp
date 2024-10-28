@@ -50,7 +50,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
     public static double GetReward(TicTacToeModel baseModel, TicTacToeModel model)
     {
         var score = 0.0;
-        for (var i = 0; i < 5000; i++)
+        for (var i = 0; i < 50000; i++)
         {
             var ticTacToe = new TicTacToe();
             var result = ticTacToe.PlayOut(baseModel, model, false, true);
@@ -58,7 +58,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
                 score += 1.0;
         }
 
-        for (var i = 0; i < 5000; i++)
+        for (var i = 0; i < 50000; i++)
         {
             var ticTacToe = new TicTacToe();
             var result = ticTacToe.PlayOut(model, baseModel, true, false);
@@ -101,7 +101,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
 
     public static void RunParameterExploringPolicyGradients()
     {
-        var populationSize = 200;
+        var populationSize = 20;
         var muLearningRate = 0.2;
         var sigmaLearningRate = 0.1;
         var g = 0;
@@ -124,7 +124,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
             Console.WriteLine($"Generation {g}: {muReward}");
             g += 1;
 
-            if (muReward >= 7500)
+            if (muReward >= 75000)
             {
                 basePlayer = Operate([mu], x => x[0]);
             }
@@ -162,7 +162,7 @@ public class TicTacToeModel : IModel<TicTacToeModel>
 
             mu = muOptimizer.Update(mu, muGradient);
             sigma = sigmaOptimizer.Update(sigma, sigmaGradient);
+            mu.Save("BestModel.json.zip");
         }
-        mu.Save("BestModel.json.zip");
     }
 }
